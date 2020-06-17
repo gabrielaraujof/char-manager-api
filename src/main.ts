@@ -8,9 +8,9 @@ async function bootstrap() {
 
   const options = new DocumentBuilder()
     .setTitle('Character Manager')
-    .setDescription('API Description')
+    .setDescription('The Character Manager API Description')
     .setVersion('0.1')
-    .addTag('character')
+    .addTag('characters')
     .build();
   const document = SwaggerModule.createDocument(app, options);
   SwaggerModule.setup('/', app, document);
