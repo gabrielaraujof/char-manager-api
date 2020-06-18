@@ -1,4 +1,4 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Post, Param, Body } from '@nestjs/common';
 import { CharacterService } from './character.service';
 import { Character } from './character.entity';
 import { ApiTags } from '@nestjs/swagger';
@@ -8,8 +8,18 @@ import { ApiTags } from '@nestjs/swagger';
 export class CharacterController {
     constructor(private readonly characterService: CharacterService) { }
 
+    @Post()
+    create(@Body() createCharDto: Character) {
+        return this.characterService.create(createCharDto);
+    }
+
     @Get()
     findAll(): Promise<Character[]> {
         return this.characterService.findAll();
+    }
+
+    @Get(':id')
+    findOne(@Param('id') id: string) {
+        return this.characterService.findOne(id);
     }
 }
