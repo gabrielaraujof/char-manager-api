@@ -6,20 +6,20 @@ import { ApiTags } from '@nestjs/swagger';
 @ApiTags('characters')
 @Controller('characters')
 export class CharacterController {
-    constructor(private readonly characterService: CharacterService) { }
+  constructor(private readonly characterService: CharacterService) {}
 
-    @Post()
-    create(@Body() createCharDto: Character) {
-        return this.characterService.create(createCharDto);
-    }
+  @Post()
+  create(@Body() createCharDto: Character): Promise<Character> {
+    return this.characterService.create(createCharDto);
+  }
 
-    @Get()
-    findAll(): Promise<Character[]> {
-        return this.characterService.findAll();
-    }
+  @Get()
+  findAll(): Promise<Character[]> {
+    return this.characterService.findAll();
+  }
 
-    @Get(':id')
-    findOne(@Param('id') id: string) {
-        return this.characterService.findOne(id);
-    }
+  @Get(':id')
+  findOne(@Param('id') id: string): Promise<Character> {
+    return this.characterService.findOne(id);
+  }
 }

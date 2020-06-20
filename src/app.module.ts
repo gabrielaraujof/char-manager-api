@@ -18,4 +18,4 @@ const TYPE_ORM_OPTIONS: TypeOrmModuleOptions = {
 @Module({
   imports: [TypeOrmModule.forRoot(TYPE_ORM_OPTIONS), CharacterModule],
 })
-export class AppModule { }
+export class AppModule {}
