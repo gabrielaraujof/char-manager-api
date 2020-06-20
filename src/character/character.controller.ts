@@ -1,10 +1,14 @@
-import { Controller, Get, Post, Param, Body } from '@nestjs/common';
+import { Controller, Get, Post, Param, Body, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { AuthGuard } from '@nestjs/passport';
+
 import { CharacterService } from './character.service';
 import { Character } from './character.entity';
-import { ApiTags } from '@nestjs/swagger';
 
 @ApiTags('characters')
+@ApiBearerAuth()
 @Controller('characters')
+@UseGuards(AuthGuard())
 export class CharacterController {
   constructor(private readonly characterService: CharacterService) {}
 

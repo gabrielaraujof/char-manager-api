@@ -1,17 +1,15 @@
 import { Test, TestingModule } from '@nestjs/testing';
-
-import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
+import { JwtModule } from '@nestjs/jwt';
 
-import { CharacterController } from './character.controller';
-import { CharacterService } from './character.service';
+import { AuthController } from './auth.controller';
 import { ConfigModule } from '../config/config.module';
 import { AuthModuleOptions, JwtConfig } from '../config/config.service';
-import { JwtStrategy } from '../auth/jwt.strategy';
+import { AuthService } from './auth.service';
+import { JwtStrategy } from './jwt.strategy';
 
-describe('Character Controller', () => {
-  let controller: CharacterController;
-  const charactersService = { findAll: () => [] };
+describe('Auth Controller', () => {
+  let controller: AuthController;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -20,14 +18,11 @@ describe('Character Controller', () => {
         PassportModule.register(AuthModuleOptions),
         ConfigModule,
       ],
-      providers: [
-        { provide: CharacterService, useValue: charactersService },
-        JwtStrategy,
-      ],
-      controllers: [CharacterController],
+      providers: [AuthService, JwtStrategy],
+      controllers: [AuthController],
     }).compile();
 
-    controller = module.get<CharacterController>(CharacterController);
+    controller = module.get<AuthController>(AuthController);
   });
 
   it('should be defined', () => {

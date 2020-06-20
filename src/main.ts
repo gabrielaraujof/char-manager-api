@@ -9,6 +9,7 @@ async function bootstrap() {
   const options = new DocumentBuilder()
     .setTitle('Character Manager')
     .setDescription('The Character Manager API Description')
+    .addBearerAuth()
     .setVersion('0.1')
     .addTag('characters')
     .build();
