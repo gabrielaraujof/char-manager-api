@@ -2,15 +2,18 @@ import {
   Injectable,
   InternalServerErrorException,
   ConflictException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
-import { OAuthProvider } from './oauth-provider.enum';
 import { JwtPayload } from './jwt-payload.interface';
 import { User } from './user.entity';
 import { SignUpDto } from './dto/signup.dto';
+import { SignInDto } from './dto/signin.dto';
+import { AccessTokenDto } from './dto/access-token.dto';
+import { OAuthProfileDto } from './dto/validate-oauth.dto';
 
 @Injectable()
 export class AuthService {
@@ -20,7 +23,7 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async signUp(signUpDto: SignUpDto): Promise<User> {
+  async signUp(signUpDto: SignUpDto): Promise<void> {
     const { email, password, firstName, lastName } = signUpDto;
     const user = this.userRepo.create();
     user.email = email;
@@ -28,7 +31,7 @@ export class AuthService {
     user.lastName = lastName;
     user.password = await user.hashPassword(password);
     try {
-      return await this.userRepo.save(user);
+      await this.userRepo.save(user);
     } catch (err) {
       if (err.code === 11000) {
         // TODO: extract error codes (duplicated entry)
@@ -39,30 +42,42 @@ export class AuthService {
     }
   }
 
-  async validateOAuth(
-    email: string,
-    thirdPartyId: string,
-    provider: OAuthProvider,
-  ): Promise<string> {
-    try {
-      // You can add some registration logic here,
-      // to register the user using their thirdPartyId (in this case their googleId)
-      // let user: IUser = await this.usersService.findOneByThirdPartyId(thirdPartyId, provider);
+  async signIn(signInDto: SignInDto): Promise<AccessTokenDto> {
+    const { email, password } = signInDto;
+    const user = await this.userRepo.findOne({ email });
 
-      // if (!user)
-      // user = await this.usersService.registerOAuthUser(thirdPartyId, provider);
-
-      const payload: JwtPayload = {
-        email,
-        oauth: {
-          id: thirdPartyId,
-          provider,
-        },
-      };
-
-      return this.jwtService.sign(payload);
-    } catch (err) {
-      throw new InternalServerErrorException('validateOAuthLogin', err.message);
+    if (user && (await user.validatePassword(password))) {
+      const accessToken = this.jwtService.sign({...new JwtPayload(user)});
+      return { accessToken };
+    } else {
+      throw new UnauthorizedException('Invalid credentials');
     }
+  }
+
+  async validateOAuth(oauthProfile: OAuthProfileDto): Promise<AccessTokenDto> {
+    try {
+      const { thirdPartyId, provider } = oauthProfile;
+      let user = await this.userRepo.findOne({ thirdPartyId, provider });
+      if (!user) {
+        user = this.userRepo.create(oauthProfile);
+        await this.userRepo.save(user);
+      }
+      const accessToken = this.jwtService.sign({...new JwtPayload(user)});
+      return { accessToken };
+    } catch (err) {
+      throw new InternalServerErrorException('Can\'t validate oAuth login', err.message);
+    }
+  }
+
+  async validateOAuthUser({ oauth }: JwtPayload): Promise<User | null> {
+    const { id: thirdPartyId, provider } = oauth;
+    const user = await this.userRepo.findOne({ thirdPartyId, provider });
+    //   TODO: maybe do some external validation on the issuer servers?
+    return user || null;
+  }
+
+  async validateLocalUser({ email }: JwtPayload): Promise<User | null> {
+    const user = await this.userRepo.findOne({ email });
+    return user || null;
   }
 }

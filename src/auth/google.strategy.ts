@@ -4,8 +4,9 @@ import { Strategy } from 'passport-google-oauth20';
 
 import { AuthService } from './auth.service';
 import { OAuthProvider } from './oauth-provider.enum';
-import { GooglePayload } from './google-payload.interface';
+import { IGoogleProfile } from './google-payload.interface';
 import { ConfigService } from '../config/config.service';
+import { AccessTokenDto } from './dto/access-token.dto';
 
 @Injectable()
 export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
@@ -16,18 +17,16 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
   async validate(
     accessToken: string,
     refreshToken: string,
-    profile: { id: string; emails: { value: string }[] },
-    done: (err, payload: GooglePayload) => void,
+    profile: IGoogleProfile,
+    done: (err, payload: AccessTokenDto) => void,
   ): Promise<void> {
-    const {
-      id,
-      emails: [{ value: email }],
-    } = profile;
-    const token = await this.authService.validateOAuth(
-      email,
-      id,
-      OAuthProvider.GOOGLE,
-    );
-    return done(null, { token });
+    const oauthData = {
+      thirdPartyId: profile.id,
+      email: profile.emails[0].value,
+      firstName: profile.name.givenName,
+      lastName: profile.name.familyName,
+      provider: OAuthProvider.GOOGLE,
+    };
+    return done(null, await this.authService.validateOAuth(oauthData));
   }
 }

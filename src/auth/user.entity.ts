@@ -1,8 +1,9 @@
 import { Entity, Column, ObjectID, ObjectIdColumn, Unique } from 'typeorm';
 import * as bcrypt from 'bcrypt';
+import { OAuthProvider } from './oauth-provider.enum';
 
 @Entity()
-@Unique(['email'])
+@Unique(['email', 'thirdPartyId', 'provider'])
 export class User {
   @ObjectIdColumn()
   id: ObjectID;
@@ -21,6 +22,12 @@ export class User {
 
   @Column()
   salt: string;
+
+  @Column()
+  thirdPartyId: string;
+
+  @Column()
+  provider: OAuthProvider;
 
   get fullName(): string {
     return `${this.firstName} ${this.lastName}`;

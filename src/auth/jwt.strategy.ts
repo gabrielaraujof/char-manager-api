@@ -4,34 +4,28 @@ import { Strategy, ExtractJwt } from 'passport-jwt';
 
 import { JwtPayload } from './jwt-payload.interface';
 import { ConfigService } from '../config/config.service';
+import { User } from './user.entity';
+import { AuthService } from './auth.service';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
-  constructor(private config: ConfigService) {
+  constructor(private authService: AuthService, private config: ConfigService) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       secretOrKey: config.jwtSecret,
     });
   }
 
-  async validate(payload: JwtPayload): Promise<any> {
-    const { email, oauth } = payload;
-
-    if (oauth) {
-      //   TODO: verify authentication on google servers
-      //   Otherwise, throw new UnauthorizedException();
-    }
-
-    //   TODO: now retrieve user from database
-    //   const user = await this.userRepo.findOne({ email });
-    const user = { email };
+  async validate(payload: JwtPayload): Promise<User> {
+    const user = payload.oauth
+      ? await this.authService.validateOAuthUser(payload)
+      : await this.authService.validateLocalUser(payload);
+    // TODO: possibly also validate user claims??
 
     if (!user) {
       throw new UnauthorizedException();
+    } else {
+      return user;
     }
-
-    // Optionally, validate all user claims
-
-    return user;
   }
 }

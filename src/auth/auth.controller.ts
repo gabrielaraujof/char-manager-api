@@ -8,15 +8,17 @@ import {
   Post,
   UsePipes,
   ValidationPipe,
+  HttpCode,
 } from '@nestjs/common';
 import { ApiTags, ApiExcludeEndpoint } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { Request, Response } from 'express';
 
-import { GooglePayload } from './google-payload.interface';
 import { ConfigService } from '../config/config.service';
 import { SignUpDto } from './dto/signup.dto';
 import { AuthService } from './auth.service';
+import { SignInDto } from './dto/signin.dto';
+import { AccessTokenDto } from './dto/access-token.dto';
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
@@ -36,10 +38,10 @@ export class AuthController {
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
   googleLoginCallback(
-    @Req() req: Request & { user: GooglePayload },
+    @Req() req: Request & { user: AccessTokenDto },
     @Res() res: Response,
   ): void {
-    const token: string = req.user.token;
+    const token: string = req.user.accessToken;
     if (token) {
       res.redirect(`${this.config.clientUrl}/login/success/${token}`);
     } else {
@@ -50,7 +52,13 @@ export class AuthController {
   @Post('/signup')
   @UsePipes(ValidationPipe)
   async signUp(@Body() signupDto: SignUpDto): Promise<void> {
-    // TODO: return user view object
-    await this.authService.signUp(signupDto);
+    return this.authService.signUp(signupDto);
+  }
+
+  @Post('/signin')
+  @HttpCode(200)
+  @UsePipes(ValidationPipe)
+  async signIn(@Body() signIn: SignInDto): Promise<AccessTokenDto> {
+    return this.authService.signIn(signIn);
   }
 }
