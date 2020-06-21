@@ -1,12 +1,43 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  ConflictException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 
 import { OAuthProvider } from './oauth-provider.enum';
 import { JwtPayload } from './jwt-payload.interface';
+import { User } from './user.entity';
+import { SignUpDto } from './dto/signup.dto';
 
 @Injectable()
 export class AuthService {
-  constructor(private jwtService: JwtService) {}
+  constructor(
+    @InjectRepository(User)
+    private readonly userRepo: Repository<User>,
+    private jwtService: JwtService,
+  ) {}
+
+  async signUp(signUpDto: SignUpDto): Promise<User> {
+    const { email, password, firstName, lastName } = signUpDto;
+    const user = this.userRepo.create();
+    user.email = email;
+    user.firstName = firstName;
+    user.lastName = lastName;
+    user.password = await user.hashPassword(password);
+    try {
+      return await this.userRepo.save(user);
+    } catch (err) {
+      if (err.code === 11000) {
+        // TODO: extract error codes (duplicated entry)
+        throw new ConflictException('Email already in use');
+      } else {
+        throw new InternalServerErrorException();
+      }
+    }
+  }
 
   async validateOAuth(
     email: string,
