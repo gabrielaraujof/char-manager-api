@@ -1,5 +1,5 @@
 import { Entity, Column, ObjectID, ObjectIdColumn, Unique } from 'typeorm';
-import * as bcrypt from 'bcrypt';
+import * as bcrypt from 'bcryptjs';
 import { OAuthProvider } from './oauth-provider.enum';
 
 @Entity()
