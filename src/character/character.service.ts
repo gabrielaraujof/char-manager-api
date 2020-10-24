@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { from, Observable } from 'rxjs';
 import { Repository } from 'typeorm';
 
 import { Character } from './character.entity';
@@ -11,16 +12,16 @@ export class CharacterService {
     private readonly characterRepo: Repository<Character>,
   ) {}
 
-  findAll(): Promise<Character[]> {
-    return this.characterRepo.find();
+  findAll(): Observable<Character[]> {
+    return from(this.characterRepo.find());
   }
 
-  findOne(id: string): Promise<Character> {
-    return this.characterRepo.findOne(id);
+  findOne(id: string): Observable<Character> {
+    return from(this.characterRepo.findOne(id));
   }
 
-  create(char: Character): Promise<Character> {
+  create(char: Character): Observable<Character> {
     const instance = this.characterRepo.create(char);
-    return this.characterRepo.save(instance);
+    return from(this.characterRepo.save(instance));
   }
 }
